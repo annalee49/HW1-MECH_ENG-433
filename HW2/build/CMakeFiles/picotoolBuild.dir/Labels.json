@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/Users/annalee/Documents/GitHub/MECH_ENG-433/HW2/build/CMakeFiles/picotoolBuild"
+		},
+		{
+			"file" : "/Users/annalee/Documents/GitHub/MECH_ENG-433/HW2/build/CMakeFiles/picotoolBuild.rule"
+		},
+		{
+			"file" : "/Users/annalee/Documents/GitHub/MECH_ENG-433/HW2/build/CMakeFiles/picotoolBuild-complete.rule"
+		},
+		{
+			"file" : "/Users/annalee/Documents/GitHub/MECH_ENG-433/HW2/build/picotool/src/picotoolBuild-stamp/picotoolBuild-build.rule"
+		},
+		{
+			"file" : "/Users/annalee/Documents/GitHub/MECH_ENG-433/HW2/build/picotool/src/picotoolBuild-stamp/picotoolBuild-configure.rule"
+		},
+		{
+			"file" : "/Users/annalee/Documents/GitHub/MECH_ENG-433/HW2/build/picotool/src/picotoolBuild-stamp/picotoolBuild-download.rule"
+		},
+		{
+			"file" : "/Users/annalee/Documents/GitHub/MECH_ENG-433/HW2/build/picotool/src/picotoolBuild-stamp/picotoolBuild-install.rule"
+		},
+		{
+			"file" : "/Users/annalee/Documents/GitHub/MECH_ENG-433/HW2/build/picotool/src/picotoolBuild-stamp/picotoolBuild-mkdir.rule"
+		},
+		{
+			"file" : "/Users/annalee/Documents/GitHub/MECH_ENG-433/HW2/build/picotool/src/picotoolBuild-stamp/picotoolBuild-patch.rule"
+		},
+		{
+			"file" : "/Users/annalee/Documents/GitHub/MECH_ENG-433/HW2/build/picotool/src/picotoolBuild-stamp/picotoolBuild-test.rule"
+		},
+		{
+			"file" : "/Users/annalee/Documents/GitHub/MECH_ENG-433/HW2/build/picotool/src/picotoolBuild-stamp/picotoolBuild-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"picotoolBuild"
+		],
+		"name" : "picotoolBuild"
+	}
+}
