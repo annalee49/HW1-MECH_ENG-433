@@ -1,0 +1,28 @@
+# Ignore build output folders
+/build/
+/bin/
+/obj/
+
+# Ignore macOS system files
+.DS_Store
+
+# Ignore editor files (VSCode, etc.)
+.vscode/
+/*.code-workspace
+
+# Ignore Pico SDK build files if inside your repo
+pico-sdk/build/
+
+# Ignore CMake cache and files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Ignore temporary files
+*.log
+*.tmp
+*.bak
+
+
+
