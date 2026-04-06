@@ -1,7 +1,0 @@
-/Users/annalee/Documents/GitHub/HW1-MECH_ENG-433/HW2/build/_deps/picotool/picotool
-/Users/annalee/Documents/GitHub/HW1-MECH_ENG-433/HW2/build/_deps/picotool/picotoolTargets.cmake
-/Users/annalee/Documents/GitHub/HW1-MECH_ENG-433/HW2/build/_deps/picotool/picotoolTargets-release.cmake
-/Users/annalee/Documents/GitHub/HW1-MECH_ENG-433/HW2/build/_deps/picotool/picotoolConfig.cmake
-/Users/annalee/Documents/GitHub/HW1-MECH_ENG-433/HW2/build/_deps/picotool/picotoolConfigVersion.cmake
-/Users/annalee/Documents/GitHub/HW1-MECH_ENG-433/HW2/build/_deps/picotool/enc_bootloader.elf
-/Users/annalee/Documents/GitHub/HW1-MECH_ENG-433/HW2/build/_deps/picotool/enc_bootloader_mbedtls.elf
