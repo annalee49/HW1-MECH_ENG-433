@@ -1,10 +1,8 @@
 #include <stdio.h>                    // standard C library
-#include "pico/stdlib.h"              // core Pico SDK
-#include "pico/platform.h"            // required by stdlib
-#include "hardware/gpio.h"            // for gpio_set_function
-#include "hardware/pwm.h"             // PWM control
-#include "hardware/adc.h"             // ADC input
-#include "pico/cyw43_arch.h"          // only if you use Wi-Fi (2W only)
+#include "pico/stdlib.h" // CMakeLists.txt must have pico_stdlib in target_link_libraries
+#include "hardware/pwm.h" // CMakeLists.txt must have hardware_pwm in target_link_libraries
+#include "hardware/adc.h" // CMakeLists.txt must have hardware_adc in target_link_libraries
+
 
 #define PWMPIN 16
 
