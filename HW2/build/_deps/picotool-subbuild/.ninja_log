@@ -1,0 +1,21 @@
+# ninja log v7
+0	13	1775436525214486916	picotool-populate-prefix/src/picotool-populate-stamp/picotool-populate-mkdir	22e2ef7af5c67063
+0	13	1775436525214486916	/Users/annalee/Documents/GitHub/HW1-MECH_ENG-433/HW2/build/_deps/picotool-subbuild/picotool-populate-prefix/src/picotool-populate-stamp/picotool-populate-mkdir	22e2ef7af5c67063
+13	1106	1775436526307373126	picotool-populate-prefix/src/picotool-populate-stamp/picotool-populate-download	6bfc45622d359bb7
+13	1106	1775436526307373126	/Users/annalee/Documents/GitHub/HW1-MECH_ENG-433/HW2/build/_deps/picotool-subbuild/picotool-populate-prefix/src/picotool-populate-stamp/picotool-populate-download	6bfc45622d359bb7
+1106	1133	1775436526307980023	picotool-populate-prefix/src/picotool-populate-stamp/picotool-populate-update	bdb7cc78369cd4e5
+1106	1133	1775436526307980023	/Users/annalee/Documents/GitHub/HW1-MECH_ENG-433/HW2/build/_deps/picotool-subbuild/picotool-populate-prefix/src/picotool-populate-stamp/picotool-populate-update	bdb7cc78369cd4e5
+1133	1147	1775436526348239169	picotool-populate-prefix/src/picotool-populate-stamp/picotool-populate-patch	625e5c806086059c
+1133	1147	1775436526348239169	/Users/annalee/Documents/GitHub/HW1-MECH_ENG-433/HW2/build/_deps/picotool-subbuild/picotool-populate-prefix/src/picotool-populate-stamp/picotool-populate-patch	625e5c806086059c
+1147	1165	1775436526366369888	picotool-populate-prefix/src/picotool-populate-stamp/picotool-populate-configure	a9208d4509a2606f
+1147	1165	1775436526366369888	/Users/annalee/Documents/GitHub/HW1-MECH_ENG-433/HW2/build/_deps/picotool-subbuild/picotool-populate-prefix/src/picotool-populate-stamp/picotool-populate-configure	a9208d4509a2606f
+1165	1180	1775436526380852056	picotool-populate-prefix/src/picotool-populate-stamp/picotool-populate-build	bf75b35405ce2399
+1165	1180	1775436526380852056	/Users/annalee/Documents/GitHub/HW1-MECH_ENG-433/HW2/build/_deps/picotool-subbuild/picotool-populate-prefix/src/picotool-populate-stamp/picotool-populate-build	bf75b35405ce2399
+1180	1234	1775436526434347409	picotool-populate-prefix/src/picotool-populate-stamp/picotool-populate-install	9440a52bbdb7e00d
+1180	1234	1775436526434347409	/Users/annalee/Documents/GitHub/HW1-MECH_ENG-433/HW2/build/_deps/picotool-subbuild/picotool-populate-prefix/src/picotool-populate-stamp/picotool-populate-install	9440a52bbdb7e00d
+1234	1276	1775436526477353594	picotool-populate-prefix/src/picotool-populate-stamp/picotool-populate-test	aad8390cdc701ee1
+1234	1276	1775436526477353594	/Users/annalee/Documents/GitHub/HW1-MECH_ENG-433/HW2/build/_deps/picotool-subbuild/picotool-populate-prefix/src/picotool-populate-stamp/picotool-populate-test	aad8390cdc701ee1
+1276	1297	1775436526497998150	CMakeFiles/picotool-populate-complete	f601683aa274760b
+1276	1297	1775436526497998150	picotool-populate-prefix/src/picotool-populate-stamp/picotool-populate-done	f601683aa274760b
+1276	1297	1775436526497998150	/Users/annalee/Documents/GitHub/HW1-MECH_ENG-433/HW2/build/_deps/picotool-subbuild/CMakeFiles/picotool-populate-complete	f601683aa274760b
+1276	1297	1775436526497998150	/Users/annalee/Documents/GitHub/HW1-MECH_ENG-433/HW2/build/_deps/picotool-subbuild/picotool-populate-prefix/src/picotool-populate-stamp/picotool-populate-done	f601683aa274760b
