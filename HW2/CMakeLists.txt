@@ -1,27 +1,38 @@
 cmake_minimum_required(VERSION 3.13)
 
+# Path to Pico SDK
+set(PICO_SDK_PATH "/Users/annalee/Documents/GitHub/pico-sdk")
 
-# Set the project name and language
-project(HW2 C CXX ASM)
-
-# Path to your Pico SDK (adjust if needed)
-set(PICO_SDK_PATH "/path/to/pico-sdk")
-
-# Initialize the SDK
+# Include SDK
 include(pico_sdk_import.cmake)
 
-# Initialize the Pico SDK
+# Project
+project(HW2_project C CXX ASM)
+
+# Initialize Pico SDK
 pico_sdk_init()
 
-# Add your executable
-add_executable(HW2 HW2.c)
+# Add source files
+add_executable(HW2
+    main.c
+)
 
-# Link the Pico standard library
-target_link_libraries(HW2 pico_stdlib)
+# Link Pico SDK libraries including the hardware modules you use
+target_link_libraries(HW2
+    pico_stdlib
+    hardware_pwm
+    hardware_gpio
+    hardware_adc          # <- add ADC here
+    platform
+    cyw43_arch
+)
 
-# Enable USB output (optional, remove if unused)
+# Enable USB/stdio (optional)
 pico_enable_stdio_usb(HW2 1)
 pico_enable_stdio_uart(HW2 0)
 
-# Create map/bin/hex files (optional)
+# Generate map/bin/hex/uf2 files
 pico_add_extra_outputs(HW2)
+
+# Export compile commands
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
