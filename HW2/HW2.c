@@ -34,8 +34,8 @@ int main()
     pwm_set_wrap(slice_num, wrap); 
     pwm_set_enabled(slice_num, true); // turn on the PWM
 
-    uint16_t min_level = 1000; //5% duty cycle, 1 ms
-    uint16_t max_level = 8000; //30% duty cycle, 6 ms
+    uint16_t min_level = 300; //1.5% duty cycle, 0.2 ms
+    uint16_t max_level = 2500; //12.5% duty cycle, 2.5 ms
 
     pwm_set_gpio_level(PWMPIN, 1500/2); // set the duty cycle to 50% (old)
 

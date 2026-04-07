@@ -1,0 +1,13 @@
+{
+  "folders": [
+    {
+      "path": "HW2",
+      "name": "📁 HW2 (CircuitPython)"
+    }
+  ],
+  "settings": {
+    "micropythonStudio.project": true,
+    "micropythonStudio.targetMCU": "rp2040",
+    "micropythonStudio.language": "CircuitPython"
+  }
+}
