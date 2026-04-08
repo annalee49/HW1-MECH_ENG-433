@@ -12,7 +12,6 @@
 #define i2c_default PICO_DEFAULT_I2C_INSTANCE()
 #define MCP23008_ADDR 0x20 //A0,A1,A2 are all grounded
 #define heartbeat_pin 15 //GP15 on the raspberry pi
-#define CYW43_WL_GPIO_LED_PIN 25 
 
 int main()
 {
@@ -22,35 +21,40 @@ int main()
     sleep_ms(2000); // <-- IMPORTANT
 
     // I2C Initialisation. Using it at 400Khz.
+    printf("Starting I2C init\n");
     i2c_init(i2c0, 400*1000);
+    printf("I2C init done\n");
     
     gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
     gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);
+    printf("set up SDA and SCL\n");
     //gpio_pull_up(I2C_SDA); using my own external
     //gpio_pull_up(I2C_SCL); using my own external
     //GP7 should be output and GP0 should be input (chip not the raspberry pi)
     // For more examples of I2C use see https://github.com/raspberrypi/pico-examples/tree/master/i2c
 
     // Example to turn on the Pico W LED
-    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
-
-    while (true) {
-        printf("Hello, USB!\n");
-        sleep_ms(1000);
-        printf("save us save us\n");
-    }
+    //cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
 
     //PART 1: initialize the I2C
     uint8_t buf[2];
     buf[0] = 0x00;   //IODIR register address
     buf[1] = 0x7F;   //set directions GP7 output, GP0 input, others input
 
-    int ret = i2c_write_blocking(i2c0, MCP23008_ADDR, buf, 2, false);
-    if (ret < 0) {
-        printf("I2C write failed\n");
-    } else {
-        printf("IODIR set successfully\n");
-    }
+    // int ret = i2c_write_blocking(i2c0, MCP23008_ADDR, buf, 2, false);
+    // if (ret < 0) {
+    //     printf("I2C write failed\n");
+    // } else {
+    //     printf("IODIR set successfully\n");
+    // }
+    i2c_write_blocking(i2c0, MCP23008_ADDR, buf, 2, false); //works up to here rn 
+
+    // while (true) {
+    //     printf("Hello, USB!\n");
+    //     sleep_ms(1000);
+    //     printf("save us save us\n");
+    //     sleep_ms(1000);
+    // }
     
     //PART 2: heartbeat LED
 
