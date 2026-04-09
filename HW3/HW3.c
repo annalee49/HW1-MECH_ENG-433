@@ -18,7 +18,7 @@ int main()
     stdio_init_all();
     cyw43_arch_init();
 
-    sleep_ms(2000); // <-- IMPORTANT
+    sleep_ms(5000); // <-- IMPORTANT
 
     // I2C Initialisation. Using it at 400Khz.
     printf("Starting I2C init\n");
@@ -41,13 +41,8 @@ int main()
     buf[0] = 0x00;   //IODIR register address
     buf[1] = 0x7F;   //set directions GP7 output, GP0 input, others input
 
-    // int ret = i2c_write_blocking(i2c0, MCP23008_ADDR, buf, 2, false);
-    // if (ret < 0) {
-    //     printf("I2C write failed\n");
-    // } else {
-    //     printf("IODIR set successfully\n");
-    // }
-    i2c_write_blocking(i2c0, MCP23008_ADDR, buf, 2, false); //works up to here rn 
+    i2c_write_blocking(i2c0, MCP23008_ADDR, buf, 2, false); 
+    printf("initialization successful\n");
 
     // while (true) {
     //     printf("Hello, USB!\n");
@@ -71,7 +66,23 @@ int main()
         //i currently have my heartbeat light (blue) connected to GP15 on the raspberry pi
         //try to blink LED that i add to my board, blink GP7
         //once that works, try to read from GP0 and then blink GP7
+
+        //PART 3: getting the LED on GP7 to blink
+
+        //turn on GP7 led (set high)
+        buf[0] = 0x0A;        // OLAT register address
+        buf[1] = 0x80;  // set only GP7 to HIGH
+        i2c_write_blocking(i2c0, MCP23008_ADDR, buf, 2, false);
+        printf("GP7 LED ON\n");
+        sleep_ms(500);  // wait for 500ms
+
+        // turn off GP7 (set low)
+        buf[1] = 0x00;      // set all pins to LOW
+        i2c_write_blocking(i2c0, MCP23008_ADDR, buf, 2, false);
+        printf("GP7 LED OFF\n");
+        sleep_ms(500);  // wait for 500ms
     }
+   
 
 //ADDR is 0x00, 0x01, 0x02...
 //buf is the array of 8 bit data
