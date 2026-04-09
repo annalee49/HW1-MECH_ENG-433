@@ -71,7 +71,7 @@ int main()
 
         //turn on GP7 led (set high)
         buf[0] = 0x0A;        // OLAT register address
-        buf[1] = 0x80;  // set only GP7 to HIGH
+        buf[1] = (1 << 7);  // set only GP7 to HIGH
         i2c_write_blocking(i2c0, MCP23008_ADDR, buf, 2, false);
         printf("GP7 LED ON\n");
         sleep_ms(500);  // wait for 500ms
@@ -82,6 +82,19 @@ int main()
         printf("GP7 LED OFF\n");
         sleep_ms(500);  // wait for 500ms
     }
+
+    //PART 4: sync up the button in GP0 and the LED in GP7
+
+    //writing the button
+    buf[0] = 0x00;   //IODIR register address
+    buf[1] = 0x7F;   //set directions GP7 output, GP0 input, others input
+    i2c_write_blocking(i2c0, MCP23008_ADDR, buf, 2, false);
+    
+    uint8_t reg[1];
+    reg[0] = 0x09; //GPIO register address (reading from)
+    i2c_write_blocking(i2c0, MCP23008_ADDR, &reg, 1, true);  // true to keep host control of bus
+    i2c_read_blocking(i2c0, MCP23008_ADDR, &buf, 1, false);  // false - finished with bus
+
    
 
 //ADDR is 0x00, 0x01, 0x02...
