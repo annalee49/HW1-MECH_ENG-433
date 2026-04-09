@@ -1,112 +1,86 @@
+//DO NOT COMMIT THIS!! the current github works 
+
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "hardware/i2c.h"
-#include "pico/cyw43_arch.h"
 
 // I2C defines
-// This example will use I2C0 on GPIO8 (SDA) and GPIO9 (SCL) running at 400KHz.
-// Pins can be changed, see the GPIO function select table in the datasheet for information on GPIO assignments
-#define I2C_PORT i2c0 //correct for this raspberry pi
-#define I2C_SDA 8 //GP08 on the raspberry pi
-#define I2C_SCL 9 //GP09 on the raspberry pi 
-#define i2c_default PICO_DEFAULT_I2C_INSTANCE()
-#define MCP23008_ADDR 0x20 //A0,A1,A2 are all grounded
-#define heartbeat_pin 15 //GP15 on the raspberry pi
+#define I2C_PORT i2c0 //default
+#define I2C_SDA 8 //GP08 on Raspberry Pi Pico
+#define I2C_SCL 9 //GP09 on Raspberry Pi Pico 
+#define MCP23008_ADDR 0x20  //I2C address for MCP23008, A0, A1, A2 all grounded
 
-int main()
-{
+// MCP23008 registers
+#define IODIR_REG 0x00   //IODIR register address
+#define OLAT_REG 0x0A    //OLAT register address
+#define GPIO_REG 0x09    //GPIO register address (for reading input)
+
+// Heartbeat LED pin (on Raspberry Pi Pico)
+#define HEARTBEAT_PIN 15  //GP15 on the Raspberry Pi Pico
+
+// Function to write a value to a specific register
+void setPin(unsigned char address, unsigned char reg, unsigned char value) {
+    uint8_t buf[2];
+    buf[0] = reg;      //Register address
+    buf[1] = value;    //Value to write
+    i2c_write_blocking(I2C_PORT, address, buf, 2, false);
+}
+
+// Function to read a value from a specific register
+unsigned char readPin(unsigned char address, unsigned char reg) {
+    uint8_t buf[1];
+    i2c_write_blocking(I2C_PORT, address, &reg, 1, true);  //Write register address to the device
+    i2c_read_blocking(I2C_PORT, address, buf, 1, false);  //Read the data from the device
+    return buf[0];  //Return the data read from the register
+}
+
+int main() {
     stdio_init_all();
-    cyw43_arch_init();
 
-    sleep_ms(5000); // <-- IMPORTANT
-
-    // I2C Initialisation. Using it at 400Khz.
-    printf("Starting I2C init\n");
-    i2c_init(i2c0, 400*1000);
-    printf("I2C init done\n");
-    
+    // Initialize I2C at 400 kHz
+    i2c_init(I2C_PORT, 400 * 1000);
     gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
     gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);
-    printf("set up SDA and SCL\n");
-    //gpio_pull_up(I2C_SDA); using my own external
-    //gpio_pull_up(I2C_SCL); using my own external
-    //GP7 should be output and GP0 should be input (chip not the raspberry pi)
-    // For more examples of I2C use see https://github.com/raspberrypi/pico-examples/tree/master/i2c
 
-    // Example to turn on the Pico W LED
-    //cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
+    sleep_ms(2000); // Allow time for the system to initialize
 
-    //PART 1: initialize the I2C
-    uint8_t buf[2];
-    buf[0] = 0x00;   //IODIR register address
-    buf[1] = 0x7F;   //set directions GP7 output, GP0 input, others input
+    // Initialize heartbeat LED (GP15)
+    gpio_init(HEARTBEAT_PIN);
+    gpio_set_dir(HEARTBEAT_PIN, GPIO_OUT);
 
-    i2c_write_blocking(i2c0, MCP23008_ADDR, buf, 2, false); 
-    printf("initialization successful\n");
-
-    // while (true) {
-    //     printf("Hello, USB!\n");
-    //     sleep_ms(1000);
-    //     printf("save us save us\n");
-    //     sleep_ms(1000);
-    // }
-    
-    //PART 2: heartbeat LED
-
-    gpio_init(heartbeat_pin);
-    gpio_set_dir(heartbeat_pin, GPIO_OUT);
+    // PART 1: initialize MCP23008 - GP7 as output, GP0 as input
+    unsigned char iodir_value = 0x7F; //GP7 as output, GP0 as input, others as input
+    setPin(MCP23008_ADDR, IODIR_REG, iodir_value); //set pin directions
 
     while (true) {
-        gpio_put(heartbeat_pin, 1);
-        sleep_ms(500);
+        // PART 2: blink heartbeat LED on GP15 (external LED)
 
-        gpio_put(heartbeat_pin, 0);
-        sleep_ms(500);
+        // Turn on the heartbeat LED
+        gpio_put(HEARTBEAT_PIN, 1);
+        sleep_ms(500);  //wait 500 ms
 
-        //i currently have my heartbeat light (blue) connected to GP15 on the raspberry pi
-        //try to blink LED that i add to my board, blink GP7
-        //once that works, try to read from GP0 and then blink GP7
+        // Turn off the heartbeat LED
+        gpio_put(HEARTBEAT_PIN, 0);
+        sleep_ms(500);  //wait 500 ms
 
-        //PART 3: getting the LED on GP7 to blink
+        // PART 3: button and LED Logic (GP0 controls GP7)
 
-        //turn on GP7 led (set high)
-        buf[0] = 0x0A;        // OLAT register address
-        buf[1] = (1 << 7);  // set only GP7 to HIGH
-        i2c_write_blocking(i2c0, MCP23008_ADDR, buf, 2, false);
-        printf("GP7 LED ON\n");
-        sleep_ms(500);  // wait for 500ms
+        // Read the state of GP0 (button)
+        unsigned char button_state = readPin(MCP23008_ADDR, GPIO_REG);
 
-        // turn off GP7 (set low)
-        buf[1] = 0x00;      // set all pins to LOW
-        i2c_write_blocking(i2c0, MCP23008_ADDR, buf, 2, false);
-        printf("GP7 LED OFF\n");
-        sleep_ms(500);  // wait for 500ms
+        // Check if GP0 (button) is pressed (LOW = pressed, HIGH = not pressed since pull up)
+        if (button_state & 0x01) { //bit 0 (GP0) is HIGH, button not pressed
+            //turn off GP7 LED (set low using OLAT)
+            setPin(MCP23008_ADDR, OLAT_REG, 0x00);  //set GP7 LOW (binary 00000000)
+            printf("GP7 LED OFF\n");
+        } else {  //bit 0 (GP0) is LOW, button pressed
+            //turn on GP7 LED (set high using OLAT)
+            setPin(MCP23008_ADDR, OLAT_REG, 0x80);  //set GP7 HIGH (binary 10000000)
+            printf("GP7 LED ON\n");
+        }
+
+        sleep_ms(100);  // Small delay to debounce button (for smoother operation)
     }
 
-    //PART 4: sync up the button in GP0 and the LED in GP7
-
-    //writing the button
-    buf[0] = 0x00;   //IODIR register address
-    buf[1] = 0x7F;   //set directions GP7 output, GP0 input, others input
-    i2c_write_blocking(i2c0, MCP23008_ADDR, buf, 2, false);
-    
-    uint8_t reg[1];
-    reg[0] = 0x09; //GPIO register address (reading from)
-    i2c_write_blocking(i2c0, MCP23008_ADDR, &reg, 1, true);  // true to keep host control of bus
-    i2c_read_blocking(i2c0, MCP23008_ADDR, &buf, 1, false);  // false - finished with bus
-
-   
-
-//ADDR is 0x00, 0x01, 0x02...
-//buf is the array of 8 bit data
-//2 or 1 is the length of the array 
-//false or true 
-
-//sending (aka writing) data
-//i2c_write_blocking(i2c0, ADDR, buf, 2, false);
-
-//reading data
-//i2c_write_blocking(i2c0, ADDR, &reg, 1, true);  // true to keep host control of bus
-//i2c_read_blocking(i2c0, ADDR, &buf, 1, false);  // false - finished with bus
-
+    return 0;
 }
