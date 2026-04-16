@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "hardware/i2c.h"
+#include <stdbool.h>
+#include <stdint.h>
+
 
 // I2C defines
 // This example will use I2C0 on GPIO8 (SDA) and GPIO9 (SCL) running at 400KHz.
@@ -8,6 +11,8 @@
 #define I2C_PORT i2c0
 #define I2C_SDA 8
 #define I2C_SCL 9
+// Heartbeat LED pin (on Raspberry Pi Pico)
+#define HEARTBEAT_PIN 15  //GP15 on the Raspberry Pi Pico
 //MPU6050 PCB sets the 7 bit address of the chip to 0b1101000 (0x68).
 #define MPU6050_ADDR 0x68
 
@@ -64,37 +69,40 @@ static int mpu6050_init() {
 bool read_mpu6050_data(float *accel_x, float *accel_y, float *accel_z,
                        float *temp_c,
                        float *gyro_x, float *gyro_y, float *gyro_z) {
-    uint8_t buf;
 
-    //write starting register address
-    if (i2c_write_blocking(I2C_PORT, MPU6050_ADDR, (uint8_t[]){ACCEL_XOUT_H}, 1, true) != 1) {
-        return false; // error
+    // Write starting register address (ACCEL_XOUT_H)
+    uint8_t reg = ACCEL_XOUT_H;
+    if (i2c_write_blocking(I2C_PORT, MPU6050_ADDR, &reg, 1, true) != 1) {
+        return false;
+    }
+    uint8_t buf;  // buffer to hold 14 bytes
+
+    // Read 14 bytes into buf
+    if (i2c_read_blocking(I2C_PORT, MPU6050_ADDR, &buf, 14, false) != 14) {
+        return false;
     }
 
-    //read 14 bytes in one burst
-    if (i2c_read_blocking(I2C_PORT, MPU6050_ADDR, buf, 14, false) != 14) {
-        return false; // error
-    }
+    // Combine two bytes into int16_t helper macro
+    #define COMBINE_BYTES(high, low) ((int16_t)((high << 8) | low))
 
-    //combine two bytes into int16_t
-    int16_t ax = (int16_t)((buf << 8) | buf);
-    int16_t ay = (int16_t)((buf << 8) | buf);
-    int16_t az = (int16_t)((buf << 8) | buf);
-    int16_t temp_raw = (int16_t)((buf << 8) | buf);
-    int16_t gx = (int16_t)((buf << 8) | buf);
-    int16_t gy = (int16_t)((buf << 8) | buf);
-    int16_t gz = (int16_t)((buf << 8) | buf);
+    int16_t ax = COMBINE_BYTES(buf, buf);
+    int16_t ay = COMBINE_BYTES(buf, buf);
+    int16_t az = COMBINE_BYTES(buf, buf);
+    int16_t temp_raw = COMBINE_BYTES(buf, buf);
+    int16_t gx = COMBINE_BYTES(buf, buf);
+    int16_t gy = COMBINE_BYTES(buf, buf);
+    int16_t gz = COMBINE_BYTES(buf, buf);
 
-    //convert to physical units
+    // Convert to physical units
     *accel_x = ax * 0.000061f;   // g
     *accel_y = ay * 0.000061f;
     *accel_z = az * 0.000061f;
-
     *temp_c = (temp_raw / 340.00f) + 36.53f;
+    *gyro_x = gx * 0.00763f;     // degrees/sec
+    *gyro_y = gy * 0.00763f;
+    *gyro_z = gz * 0.00763f;
 
-    *gyro_x = gx * 0.007630f;     // degrees/sec
-    *gyro_y = gy * 0.007630f;
-    *gyro_z = gz * 0.007630f;
+    #undef COMBINE_BYTES
 
     return true;
 }
@@ -102,6 +110,11 @@ bool read_mpu6050_data(float *accel_x, float *accel_y, float *accel_z,
 int main()
 {
     stdio_init_all();
+
+    //initialize heartbeat LED (GP15)
+    gpio_init(HEARTBEAT_PIN);
+    gpio_set_dir(HEARTBEAT_PIN, GPIO_OUT);
+
 
     // I2C Initialisation. Using it at 400Khz.
     i2c_init(I2C_PORT, 400*1000);
@@ -119,7 +132,19 @@ int main()
     float ax, ay, az, temp, gx, gy, gz;
     
     while (true) {
-            //need to read from the WHO AM I register and verify that it is 0x68 (maybe 0x98)
+        
+        //heartbeat for the pico
+        
+        //turn on the heartbeat LED
+        gpio_put(HEARTBEAT_PIN, 1);
+        sleep_ms(500);  //wait 500 ms
+
+        //turn off the heartbeat LED
+        gpio_put(HEARTBEAT_PIN, 0);
+        sleep_ms(500);  //wait 500 ms
+
+        
+        //need to read from the WHO AM I register and verify that it is 0x68 (maybe 0x98)
         unsigned char who_am_i = readPin(MPU6050_ADDR, WHO_AM_I);
 
         if (who_am_i == 0x68) {
