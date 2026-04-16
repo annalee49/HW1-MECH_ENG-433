@@ -10,8 +10,8 @@
 #define I2C_PORT i2c0
 #define I2C_SDA 8 //OLED SDA
 #define I2C_SCL 9 //OLED SCL 
-#define I2C_SDA_IMU 16 //IMU SDA
-#define I2C_SCL_IMU 17 //IMU SCL
+#define I2C_SDA_IMU 12 //IMU SDA
+#define I2C_SCL_IMU 13 //IMU SCL
 
 // Heartbeat LED pin (on Raspberry Pi Pico)
 #define HEARTBEAT_PIN 15  //GP15 on the Raspberry Pi Pico
@@ -51,17 +51,17 @@
 //function to write
 void setPin(unsigned char address, unsigned char reg, unsigned char value) {
     uint8_t buf[2];
-    buf[0] = reg;      //register address
-    buf[1] = value;    //value to write
+    buf[0] = reg;      //Register address
+    buf[1] = value;    //Value to write
     i2c_write_blocking(I2C_PORT, address, buf, 2, false);
 }
 
 //function to read
 unsigned char readPin(unsigned char address, unsigned char reg) {
     uint8_t buf[1];
-    i2c_write_blocking(I2C_PORT, address, &reg, 1, true);  //write register address to the device
-    i2c_read_blocking(I2C_PORT, address, buf, 1, false);  //read the data from the device
-    return buf[0];  //return the data read from the register
+    i2c_write_blocking(I2C_PORT, address, &reg, 1, true);  //Write register address to the device
+    i2c_read_blocking(I2C_PORT, address, buf, 1, false);  //Read the data from the device
+    return buf[0];  //Return the data read from the register
 }
 
 //write a function to initialize the MPU6050
@@ -81,26 +81,18 @@ bool read_mpu6050_data(float *accel_x, float *accel_y, float *accel_z,
 
     //write starting register address (ACCEL_XOUT_H)
     uint8_t reg = ACCEL_XOUT_H;
-    uint8_t buf;
-    if (i2c_write_blocking(I2C_PORT, MPU6050_ADDR, &reg, 1, true) != 1) {
-        return false;
-    }
+    uint8_t buf[14];
+    i2c_write_blocking(I2C_PORT, MPU6050_ADDR, &reg, 1, true);
     //read 14 bytes into buf
-    if (i2c_read_blocking(I2C_PORT, MPU6050_ADDR, &buf, 14, false) != 14) {
-        return false;
-    }
-
-    //combine two bytes into int16_t helper macro
-    #define COMBINE_BYTES(high, low) ((int16_t)((high << 8) | low))
-
-    int16_t ax = COMBINE_BYTES(buf, buf);
-    int16_t ay = COMBINE_BYTES(buf, buf);
-    int16_t az = COMBINE_BYTES(buf, buf);
-    int16_t temp_raw = COMBINE_BYTES(buf, buf);
-    int16_t gx = COMBINE_BYTES(buf, buf);
-    int16_t gy = COMBINE_BYTES(buf, buf);
-    int16_t gz = COMBINE_BYTES(buf, buf);
-
+    i2c_read_blocking(I2C_PORT, MPU6050_ADDR, buf, 14, false);
+    int16_t ax = (int16_t)(((uint16_t)buf << 8) | (uint16_t)buf);
+    int16_t ay = (int16_t)(((uint16_t)buf << 8) | (uint16_t)buf);
+    int16_t az = (int16_t)(((uint16_t)buf << 8) | (uint16_t)buf);
+    int16_t temp_raw = (int16_t)(((uint16_t)buf << 8) | (uint16_t)buf);
+    int16_t gx = (int16_t)(((uint16_t)buf << 8) | (uint16_t)buf);
+    int16_t gy = (int16_t)(((uint16_t)buf << 8) | (uint16_t)buf);
+    int16_t gz = (int16_t)(((uint16_t)buf << 8) | (uint16_t)buf);
+    
     //convert to physical units
     *accel_x = ax * 0.000061f;   // g
     *accel_y = ay * 0.000061f;
@@ -180,6 +172,7 @@ void flash_pixels_on_oled(int flashes, int delay_ms) {
 int main()
 {
     stdio_init_all();
+    printf("made it to the main loop");
 
     //initialize heartbeat LED (GP15)
     gpio_init(HEARTBEAT_PIN);
@@ -187,17 +180,19 @@ int main()
 
     // I2C Initialisation. Using it at 400Khz.
     i2c_init(I2C_PORT, 400*1000);
-    
     gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
     gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);
-    gpio_set_function(I2C_SDA_IMU, GPIO_FUNC_I2C);
-    gpio_set_function(I2C_SCL_IMU, GPIO_FUNC_I2C);
-
     gpio_pull_up(I2C_SDA);
     gpio_pull_up(I2C_SCL);
-    gpio_pull_up(I2C_SDA_IMU);
-    gpio_pull_up(I2C_SCL_IMU);
 
+    // MPU6050 on i2c1 (GPIO 18,19)
+    i2c_init(i2c1, 400 * 1000);
+    gpio_set_function(18, GPIO_FUNC_I2C);
+    gpio_set_function(19, GPIO_FUNC_I2C);
+    gpio_pull_up(18);
+    gpio_pull_up(19);
+
+    printf("I2C initialized");
     sleep_ms(2000); //allow time for the system to initialize
 
     ssd1306_setup();  //initialize OLED
@@ -208,9 +203,18 @@ int main()
 
     //see if this works
     flash_pixels_on_oled(3, 200);
+    //update the code gets to here 
 
     //initialize data points to read 
     float ax, ay, az, temp, gx, gy, gz;
+
+    for (uint8_t addr = 1; addr < 127; addr++) {
+        int ret = i2c_write_blocking(I2C_PORT, addr, NULL, 0, false);
+        if (ret >= 0) {
+            printf("Found device at 0x%02x\n", addr);
+        }
+    }
+
     
     while (true) {
         //heartbeat for the pico
@@ -224,33 +228,20 @@ int main()
 
         //need to read from the WHO AM I register and verify that it is 0x68 (maybe 0x98)
         unsigned char who_am_i = readPin(MPU6050_ADDR, WHO_AM_I);
+        printf("actual %x\n", who_am_i);
 
         //check the WHO_AM_I register
-        if (who_am_i == 0x98) {
+        if (who_am_i == 0x68) {
             printf("WHO AM I is correct\n");
         } else {
             printf("WHO AM I is not correct\n");
         }
 
-        // //read the IMU data and draw lines on the OLED 
-        // if (read_mpu6050_data(&ax, &ay, &az, &temp, &gx, &gy, &gz)) {
-        //     //flash_pixels_on_oled(3, 200);  //sanity check
-        //     draw_accel_lines(ax, ay);
-        // }
+        //read the IMU data and draw lines on the OLED 
+        read_mpu6050_data(&ax, &ay, &az, &temp, &gx, &gy, &gz);
+        printf("x acceleration %d\n", ax);
+        printf("y acceleration %d\n", ay);
 
-        // Always attempt to read IMU data and draw lines
-        bool success = read_mpu6050_data(&ax, &ay, &az, &temp, &gx, &gy, &gz);
-
-        // Optionally, you can handle failure by setting default values or clearing the display
-        if (!success) {
-            // For example, clear lines or set zero acceleration
-            ax = 0.0f;
-            ay = 0.0f;
-            // Optionally clear display or show error indicator here
-        }
-
-        // Draw lines regardless of success
-        draw_accel_lines(ax, ay);
         sleep_ms(10);  // 100 Hz reading
         }
 
