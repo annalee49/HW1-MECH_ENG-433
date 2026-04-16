@@ -3,6 +3,8 @@
 #include "hardware/i2c.h"
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include "ssd1306.h"
 
 // I2C defines
 // This example will use I2C0 on GPIO8 (SDA) and GPIO9 (SCL) running at 400KHz.
@@ -106,13 +108,39 @@ bool read_mpu6050_data(float *accel_x, float *accel_y, float *accel_z,
     *accel_y = ay * 0.000061f;
     *accel_z = az * 0.000061f;
     *temp_c = (temp_raw / 340.00f) + 36.53f;
-    *gyro_x = gx * 0.00763f;     // degrees/sec
-    *gyro_y = gy * 0.00763f;
-    *gyro_z = gz * 0.00763f;
+    *gyro_x = gx * 0.007630f;     // degrees/sec
+    *gyro_y = gy * 0.007630f;
+    *gyro_z = gz * 0.007630f;
 
     #undef COMBINE_BYTES
 
     return true;
+}
+
+//function to write line
+void ssd1306_draw_line(int x0, int y0, int x1, int y1, unsigned char color) {
+    int dx = abs(x1 - x0);
+    int sx = (x0 < x1) ? 1 : -1;
+    int dy = -abs(y1 - y0);
+    int sy = (y0 < y1) ? 1 : -1;
+    int err = dx + dy;  // error value e_xy
+
+    while (1) {
+        ssd1306_drawPixel(x0, y0, color);
+
+        if (x0 == x1 && y0 == y1)
+            break;
+
+        int e2 = 2 * err;
+        if (e2 >= dy) {
+            err += dy;
+            x0 += sx;
+        }
+        if (e2 <= dx) {
+            err += dx;
+            y0 += sy;
+        }
+    }
 }
 
 //function to write on the OLED screen 
@@ -129,7 +157,7 @@ void draw_accel_lines(float ax, float ay) {
     //draw vertical line (Y acceleration)
     ssd1306_draw_line(CENTER_X, CENTER_Y, CENTER_X, CENTER_Y - y_len, 1);
 
-    ssd1306_show();
+    ssd1306_update();
 }
 
 int main()
@@ -158,9 +186,9 @@ int main()
 
     // For more examples of I2C use see https://github.com/raspberrypi/pico-examples/tree/master/i2c
 
-    ssd1306_init();  //initialize OLED
+    ssd1306_setup();  //initialize OLED
     ssd1306_clear(); //clear display buffer
-    ssd1306_show();  //update display
+    ssd1306_update();  //update display
     
     //here is my function
     mpu6050_init();

@@ -6,6 +6,7 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+
 # Initialise pico_sdk from installed location
 # (note this can come from environment, CMake cache etc)
 
@@ -35,7 +36,7 @@ pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(HW5 HW5.c )
+add_executable(HW5 HW5.c ssd1306.c)
 
 pico_set_program_name(HW5 "HW5")
 pico_set_program_version(HW5 "0.1")
@@ -50,14 +51,19 @@ target_link_libraries(HW5
 
 # Add the standard include files to the build
 target_include_directories(HW5 PRIVATE
-        ${CMAKE_CURRENT_LIST_DIR}
-)
+        ${CMAKE_CURRENT_LIST_DIR}/ssd1306.c
+        )
 
 # Add any user requested libraries
 target_link_libraries(HW5 
         hardware_i2c
         
         )
-
+                
+target_sources(HW5 PRIVATE
+        ssd1306.c
+        HW5.c
+)
+      
 pico_add_extra_outputs(HW5)
 
