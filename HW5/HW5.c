@@ -44,8 +44,8 @@
 //OLED defines
 #define OLED_WIDTH 128 //screen is 128 pixels wide
 #define OLED_HEIGHT 64 //screen is 64 pixels talls
-#define CENTER_X (OLED_WIDTH / 2)
-#define CENTER_Y (OLED_HEIGHT / 2)
+#define CENTER_X 64
+#define CENTER_Y 32
 #define MAX_LINE_LENGTH 150
 
 //function to write
@@ -145,14 +145,25 @@ void ssd1306_draw_line(int x0, int y0, int x1, int y1, unsigned char color) {
 //function to write on the OLED screen 
 void draw_accel_lines(float ax, float ay) {
 
-    int16_t x_len = (int16_t)(ax * 80);//note these scale factors can be changed
-    int16_t y_len = (int16_t)(ay * 80);    
+    // scale factor (tune for sensitivity)
+    const float scale = 200.0f;
+
+    // convert to signed pixel displacement
+    int16_t x = (int16_t)(ax * 10*scale);
+    int16_t y = (int16_t)(ay * scale);
+    printf("ax=%f ay=%f x=%d y=%d\n", ax, ay, x, y);
+
+    // optional deadband to reduce jitter
+    if (x > -2 && x < 2) x = 0;
+    if (y > -2 && y < 2) y = 0;
+
     ssd1306_clear();
 
-    //draw horizontal line (X acceleration)
-    ssd1306_draw_line(CENTER_X - x_len, CENTER_Y, CENTER_X + x_len, CENTER_Y, 1);
-    //draw vertical line (Y acceleration)
-    ssd1306_draw_line(CENTER_X, CENTER_Y - y_len, CENTER_X, CENTER_Y + y_len, 1);
+    // X acceleration line (left/right from center)
+    ssd1306_draw_line(CENTER_X,CENTER_Y,CENTER_X + x,CENTER_Y,1);
+
+    // Y acceleration line (up/down from center)
+    ssd1306_draw_line(CENTER_X,CENTER_Y,CENTER_X,CENTER_Y+y,1);
 
     ssd1306_update();
 }
