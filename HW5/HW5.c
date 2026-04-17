@@ -46,21 +46,21 @@
 #define OLED_HEIGHT 64 //screen is 64 pixels talls
 #define CENTER_X (OLED_WIDTH / 2)
 #define CENTER_Y (OLED_HEIGHT / 2)
-#define MAX_LINE_LENGTH 30
+#define MAX_LINE_LENGTH 100
 
 //function to write
 void setPin(unsigned char address, unsigned char reg, unsigned char value) {
     uint8_t buf[2];
     buf[0] = reg;      //Register address
     buf[1] = value;    //Value to write
-    i2c_write_blocking(I2C_PORT, address, buf, 2, false);
+    i2c_write_blocking(i2c1, address, buf, 2, false);
 }
 
 //function to read
 unsigned char readPin(unsigned char address, unsigned char reg) {
     uint8_t buf[1];
-    i2c_write_blocking(I2C_PORT, address, &reg, 1, true);  //Write register address to the device
-    i2c_read_blocking(I2C_PORT, address, buf, 1, false);  //Read the data from the device
+    i2c_write_blocking(i2c1, address, &reg, 1, true);  //Write register address to the device
+    i2c_read_blocking(i2c1, address, buf, 1, false);  //Read the data from the device
     return buf[0];  //Return the data read from the register
 }
 
@@ -72,6 +72,7 @@ static int mpu6050_init() {
     setPin(MPU6050_ADDR, PWR_MGMT_1, 0x00);
     setPin(MPU6050_ADDR, ACCEL_CONFIG, 0x00);
     setPin(MPU6050_ADDR, GYRO_CONFIG, 0x18);
+    sleep_ms(100);
 }
 
 //write a function to read out all the data in a burst
@@ -82,16 +83,26 @@ bool read_mpu6050_data(float *accel_x, float *accel_y, float *accel_z,
     //write starting register address (ACCEL_XOUT_H)
     uint8_t reg = ACCEL_XOUT_H;
     uint8_t buf[14];
-    i2c_write_blocking(I2C_PORT, MPU6050_ADDR, &reg, 1, true);
+    //set register
+    i2c_write_blocking(i2c1, MPU6050_ADDR, &reg, 1, true);
     //read 14 bytes into buf
-    i2c_read_blocking(I2C_PORT, MPU6050_ADDR, buf, 14, false);
-    int16_t ax = (int16_t)(((uint16_t)buf << 8) | (uint16_t)buf);
-    int16_t ay = (int16_t)(((uint16_t)buf << 8) | (uint16_t)buf);
-    int16_t az = (int16_t)(((uint16_t)buf << 8) | (uint16_t)buf);
-    int16_t temp_raw = (int16_t)(((uint16_t)buf << 8) | (uint16_t)buf);
-    int16_t gx = (int16_t)(((uint16_t)buf << 8) | (uint16_t)buf);
-    int16_t gy = (int16_t)(((uint16_t)buf << 8) | (uint16_t)buf);
-    int16_t gz = (int16_t)(((uint16_t)buf << 8) | (uint16_t)buf);
+    i2c_read_blocking(i2c1, MPU6050_ADDR, buf, 14, false);
+
+    printf("Raw data: ");
+    for (int i = 0; i < 14; i++) {
+        printf("%02x ", buf[i]);
+    }
+    printf("\n");
+    int16_t ax = (int16_t)((buf[0] << 8) | buf[1]);
+    int16_t ay = (int16_t)((buf[2] << 8) | buf[3]);
+    int16_t az = (int16_t)((buf[4] << 8) | buf[5]);
+
+    int16_t temp_raw = (int16_t)((buf[6] << 8) | buf[7]);
+
+    int16_t gx = (int16_t)((buf[8] << 8) | buf[9]);
+    int16_t gy = (int16_t)((buf[10] << 8) | buf[11]);
+    int16_t gz = (int16_t)((buf[12] << 8) | buf[13]);
+
     
     //convert to physical units
     *accel_x = ax * 0.000061f;   // g
@@ -138,9 +149,14 @@ void draw_accel_lines(float ax, float ay) {
     int16_t x_len = (int16_t)(ax * MAX_LINE_LENGTH); //acceleration in x direction
     int16_t y_len = (int16_t)(ay * MAX_LINE_LENGTH); //acceleration in y direction
 
+    //force at least 1 pixel if nonzero
+    if (x_len == 0 && (ax > 0.01f || ax < -0.01f))
+    if (y_len == 0 && (ay > 0.01f || ay > -0.01f));
+
+    ssd1306_clear();
+    
     //draw horizontal line (X acceleration)
     ssd1306_draw_line(CENTER_X, CENTER_Y, CENTER_X + x_len, CENTER_Y, 1);
-
     //draw vertical line (Y acceleration)
     ssd1306_draw_line(CENTER_X, CENTER_Y, CENTER_X, CENTER_Y - y_len, 1);
 
@@ -209,7 +225,7 @@ int main()
     float ax, ay, az, temp, gx, gy, gz;
 
     for (uint8_t addr = 1; addr < 127; addr++) {
-        int ret = i2c_write_blocking(I2C_PORT, addr, NULL, 0, false);
+        int ret = i2c_write_blocking(i2c1, addr, NULL, 0, false);
         if (ret >= 0) {
             printf("Found device at 0x%02x\n", addr);
         }
@@ -231,7 +247,7 @@ int main()
         printf("actual %x\n", who_am_i);
 
         //check the WHO_AM_I register
-        if (who_am_i == 0x68) {
+        if (who_am_i == 0x98) {
             printf("WHO AM I is correct\n");
         } else {
             printf("WHO AM I is not correct\n");
@@ -239,9 +255,9 @@ int main()
 
         //read the IMU data and draw lines on the OLED 
         read_mpu6050_data(&ax, &ay, &az, &temp, &gx, &gy, &gz);
-        printf("x acceleration %d\n", ax);
-        printf("y acceleration %d\n", ay);
-
+        printf("x acceleration %f\n", ax);
+        printf("y acceleration %f\n", ay);
+        draw_accel_lines(ax, ay);
         sleep_ms(10);  // 100 Hz reading
         }
 
