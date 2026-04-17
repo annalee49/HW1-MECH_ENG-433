@@ -43,9 +43,9 @@
 
 //OLED defines
 #define OLED_WIDTH 128 //screen is 128 pixels wide
-#define OLED_HEIGHT 64 //screen is 64 pixels talls
+#define OLED_HEIGHT 32 //screen is 32 pixels talls
 #define CENTER_X 64
-#define CENTER_Y 32
+#define CENTER_Y 16
 #define MAX_LINE_LENGTH 150
 
 //function to write
@@ -146,10 +146,10 @@ void ssd1306_draw_line(int x0, int y0, int x1, int y1, unsigned char color) {
 void draw_accel_lines(float ax, float ay) {
 
     // scale factor (tune for sensitivity)
-    const float scale = 200.0f;
+    const float scale = 100.0f;
 
     // convert to signed pixel displacement
-    int16_t x = (int16_t)(ax * 10*scale);
+    int16_t x = (int16_t)(ax *scale);
     int16_t y = (int16_t)(ay * scale);
     printf("ax=%f ay=%f x=%d y=%d\n", ax, ay, x, y);
 
