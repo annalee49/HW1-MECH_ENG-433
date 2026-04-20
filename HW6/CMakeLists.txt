@@ -57,6 +57,7 @@ target_include_directories(HW6 PRIVATE
 target_link_libraries(HW6 
         hardware_i2c
         hardware_dma
+        hardware_gpio
         
         )
 
