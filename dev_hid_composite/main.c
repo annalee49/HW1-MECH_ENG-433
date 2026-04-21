@@ -29,6 +29,12 @@ static uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
 float ax, ay, az, gx, gy, gz, temp; //have to establish these globals
 static uint32_t imu_last_ms = 0; //these globals too
 static const uint32_t imu_interval_ms = 10; // 100 Hz
+typedef enum {
+    MODE_IMU = 0,
+    MODE_REMOTE = 1
+} mode_t;
+
+static volatile mode_t current_mode = MODE_IMU;
 
 static int mpu6050_init(void);
 bool read_mpu6050_data(float*, float*, float*, float*, float*, float*, float*);
@@ -36,6 +42,9 @@ void setPin(unsigned char, unsigned char, unsigned char);
 unsigned char readPin(unsigned char, unsigned char);
 static int8_t discretize(float v);
 static void send_mouse_report(int8_t dx, int8_t dy);
+static void update_mode_button(void);
+static void update_mode_led(void);
+static void remote_circle_motion(void);
 
 void led_blinking_task(void);
 void hid_task(void);
@@ -61,6 +70,15 @@ int main(void)
   gpio_set_function(19, GPIO_FUNC_I2C);
   gpio_pull_up(18);
   gpio_pull_up(19);
+
+  //my button is GPIO14
+  //my LED is GPIO15
+  gpio_init(14);
+  gpio_set_dir(14, GPIO_IN);
+  gpio_pull_up(14);
+
+  gpio_init(15);
+  gpio_set_dir(15, GPIO_OUT);
 
   printf("I2C initialized");
   sleep_ms(2000); //allow time for the system to initialize
@@ -213,6 +231,23 @@ void hid_task(void)
 
   if ( board_millis() - start_ms < interval_ms) return; // not enough time
   start_ms += interval_ms;
+
+  // update_mode_button();
+  // update_mode_led();
+
+  // uint32_t const btn = board_button_read();
+
+  // if (current_mode == MODE_IMU)
+  // {
+  //   read_mpu6050_data(&ax, &ay, &az, &temp, &gx, &gy, &gz);
+  //   int8_t dx = discretize(ax);
+  //   int8_t dy = discretize(ay);
+  //   tud_hid_mouse_report(REPORT_ID_MOUSE, 0x00, dx, dy, 0, 0);
+  // }
+  // else
+  // {
+  //   remote_circle_motion();
+  // }
 
   uint32_t const btn = board_button_read();
   if (board_millis() - imu_last_ms >= imu_interval_ms)
@@ -418,6 +453,41 @@ static int8_t discretize(float v)
 static void send_mouse_report(int8_t dx, int8_t dy)
 {
     if (!tud_hid_ready()) return;
+
+    tud_hid_mouse_report(REPORT_ID_MOUSE, 0x00, dx, dy, 0, 0);
+}
+
+//new function, pressing the button
+static void update_mode_button(void)
+{
+    static bool last_state = 1;
+
+    bool current_state = gpio_get(14);
+
+    // detect falling edge (button press)
+    if (last_state == 1 && current_state == 0)
+    {
+        current_mode = !current_mode;
+    }
+
+    last_state = current_state;
+}
+
+//new function, update the LED
+static void update_mode_led(void)
+{
+    gpio_put(15, current_mode == MODE_REMOTE);
+}
+
+//new function, circle
+static void remote_circle_motion(void)
+{
+    static float angle = 0.0f;
+
+    angle += 0.05f; // slow speed
+
+    int8_t dx = (int8_t)(3.0f * cosf(angle));
+    int8_t dy = (int8_t)(3.0f * sinf(angle));
 
     tud_hid_mouse_report(REPORT_ID_MOUSE, 0x00, dx, dy, 0, 0);
 }
