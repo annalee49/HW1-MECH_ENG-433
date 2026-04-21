@@ -2,11 +2,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 #include "bsp/board_api.h"
 #include "tusb.h"
-
 #include "usb_descriptors.h"
+#include "hardware/gpio.h"
+#include "pico/stdlib.h"
 
 //--------------------------------------------------------------------+
 // MACRO CONSTANT TYPEDEF PROTYPES
@@ -24,11 +26,23 @@ enum  {
 };
 
 static uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
+float ax, ay, az, gx, gy, gz, temp; //have to establish these globals
+static uint32_t imu_last_ms = 0; //these globals too
+static const uint32_t imu_interval_ms = 10; // 100 Hz
+
+static int mpu6050_init(void);
+bool read_mpu6050_data(float*, float*, float*, float*, float*, float*, float*);
+void setPin(unsigned char, unsigned char, unsigned char);
+unsigned char readPin(unsigned char, unsigned char);
+static int8_t discretize(float v);
+static void send_mouse_report(int8_t dx, int8_t dy);
 
 void led_blinking_task(void);
 void hid_task(void);
 
-/*------------- MAIN -------------*/
+//--------------------------------------------------------------------+
+// MAIN
+//--------------------------------------------------------------------+
 int main(void)
 {
   board_init();
@@ -39,6 +53,19 @@ int main(void)
   if (board_init_after_tusb) {
     board_init_after_tusb();
   }
+
+  stdio_init_all();
+  // MPU6050 on i2c1 (GPIO 18,19)
+  i2c_init(i2c1, 400 * 1000);
+  gpio_set_function(18, GPIO_FUNC_I2C);
+  gpio_set_function(19, GPIO_FUNC_I2C);
+  gpio_pull_up(18);
+  gpio_pull_up(19);
+
+  printf("I2C initialized");
+  sleep_ms(2000); //allow time for the system to initialize
+
+  mpu6050_init();
 
   while (1)
   {
@@ -112,12 +139,14 @@ static void send_hid_report(uint8_t report_id, uint32_t btn)
     }
     break;
 
-    case REPORT_ID_MOUSE:
+    case REPORT_ID_MOUSE: //THIS IS THE IMPORTANT LOOP!! THIS IS IMPORTANT FOR THE UTILIZATION OF THE FUNCTIONS YOU ADDED!!
     {
-      int8_t const delta = 5;
+      if (!tud_hid_ready()) return;
 
-      // no button, right + down, no scroll, no pan
-      tud_hid_mouse_report(REPORT_ID_MOUSE, 0x00, delta, delta, 0, 0);
+      int8_t dx = discretize(ax);
+      int8_t dy = discretize(ay);
+
+      tud_hid_mouse_report(REPORT_ID_MOUSE, 0x00, dx, dy, 0, 0);
     }
     break;
 
@@ -186,6 +215,14 @@ void hid_task(void)
   start_ms += interval_ms;
 
   uint32_t const btn = board_button_read();
+  if (board_millis() - imu_last_ms >= imu_interval_ms)
+  {
+    imu_last_ms = board_millis();
+    read_mpu6050_data(&ax, &ay, &az, &temp, &gx, &gy, &gz);
+  }
+
+  int8_t dx = discretize(ax);
+  int8_t dy = discretize(ay);
 
   // Remote wakeup
   if ( tud_suspended() && btn )
@@ -196,7 +233,7 @@ void hid_task(void)
   }else
   {
     // Send the 1st of report chain, the rest will be sent by tud_hid_report_complete_cb()
-    send_hid_report(REPORT_ID_MOUSE, btn);
+    send_mouse_report(dx, dy);
   }
 }
 
@@ -281,7 +318,9 @@ void led_blinking_task(void)
   led_state = 1 - led_state; // toggle
 }
 
-//OLD FUNCTIONS FROM OTHER ASSIGNMENT
+//--------------------------------------------------------------------+
+// OLD FUNCTIONS FROM OTHER ASSIGNMENT (MY WORK)
+//--------------------------------------------------------------------+
 
 //function to write
 void setPin(unsigned char address, unsigned char reg, unsigned char value) {
@@ -309,6 +348,8 @@ static int mpu6050_init() {
     setPin(0x68, 0x1C, 0x00);
     setPin(0x68, 0x1B, 0x18);
     sleep_ms(100);
+
+    return 0;
 }
 
 //write a function to read out all the data in a burst
@@ -324,10 +365,10 @@ bool read_mpu6050_data(float *accel_x, float *accel_y, float *accel_z,
     //read 14 bytes into buf
     i2c_read_blocking(i2c1, 0x68, buf, 14, false);
 
-    printf("Raw data: ");
-    for (int i = 0; i < 14; i++) {
-        printf("%02x ", buf[i]);
-    }
+    // printf("Raw data: ");
+    // for (int i = 0; i < 14; i++) {
+    //     printf("%02x ", buf[i]);
+    // }
     printf("\n");
     int16_t ax = (int16_t)((buf[0] << 8) | buf[1]);
     int16_t ay = (int16_t)((buf[2] << 8) | buf[3]);
@@ -350,4 +391,33 @@ bool read_mpu6050_data(float *accel_x, float *accel_y, float *accel_z,
     *gyro_z = gz * 0.007630f;
 
     return true;
+}
+
+//new function, discretize
+static int8_t discretize(float v)
+{
+    // deadzone (prevents jitter when IMU is still)
+    const float deadzone = 0.05f;
+
+    if (v < deadzone && v > -deadzone)
+        return 0;
+
+    // 4 speed levels
+    if (v > 0.8f)  return 8;
+    if (v > 0.4f)  return 4;
+    if (v > 0.1f)  return 2;
+
+    if (v < -0.8f) return -8;
+    if (v < -0.4f) return -4;
+    if (v < -0.1f) return -2;
+
+    return 0;
+}
+
+//new function, sending a mouse report 
+static void send_mouse_report(int8_t dx, int8_t dy)
+{
+    if (!tud_hid_ready()) return;
+
+    tud_hid_mouse_report(REPORT_ID_MOUSE, 0x00, dx, dy, 0, 0);
 }
