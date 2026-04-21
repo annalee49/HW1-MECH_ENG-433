@@ -1,4 +1,4 @@
-
+#include "hardware/i2c.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -7,7 +7,6 @@
 #include "tusb.h"
 
 #include "usb_descriptors.h"
-#include "imu.h"
 
 //--------------------------------------------------------------------+
 // MACRO CONSTANT TYPEDEF PROTYPES
@@ -28,7 +27,6 @@ static uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
 
 void led_blinking_task(void);
 void hid_task(void);
-float ax, ay, az, t, gx, gy, gz;
 
 /*------------- MAIN -------------*/
 int main(void)
@@ -48,10 +46,8 @@ int main(void)
     led_blinking_task();
 
     hid_task();
-    imu_read(&ax, &ay, &az, &t, &gx, &gy, &gz);
   }
 }
-
 
 //--------------------------------------------------------------------+
 // Device callbacks
@@ -95,25 +91,25 @@ static void send_hid_report(uint8_t report_id, uint32_t btn)
 
   switch(report_id)
   {
-    // case REPORT_ID_KEYBOARD:
-    // {
-    //   // use to avoid send multiple consecutive zero report for keyboard
-    //   static bool has_keyboard_key = false;
+    case REPORT_ID_KEYBOARD:
+    {
+      // use to avoid send multiple consecutive zero report for keyboard
+      static bool has_keyboard_key = false;
 
-    //   if ( btn )
-    //   {
-    //     uint8_t keycode[6] = { 0 };
-    //     keycode[0] = HID_KEY_A;
+      if ( btn )
+      {
+        uint8_t keycode[6] = { 0 };
+        keycode[0] = HID_KEY_A;
 
-    //     tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, keycode);
-    //     has_keyboard_key = true;
-    //   }else
-    //   {
-    //     // send empty key report if previously has key pressed
-    //     if (has_keyboard_key) tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, NULL);
-    //     has_keyboard_key = false;
-    //   }
-    // }
+        tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, keycode);
+        has_keyboard_key = true;
+      }else
+      {
+        // send empty key report if previously has key pressed
+        if (has_keyboard_key) tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, NULL);
+        has_keyboard_key = false;
+      }
+    }
     break;
 
     case REPORT_ID_MOUSE:
@@ -122,7 +118,6 @@ static void send_hid_report(uint8_t report_id, uint32_t btn)
 
       // no button, right + down, no scroll, no pan
       tud_hid_mouse_report(REPORT_ID_MOUSE, 0x00, delta, delta, 0, 0);
-      //tud_hid_mouse_report(0, 0x00, delta, delta, 0, 0);
     }
     break;
 
@@ -201,7 +196,7 @@ void hid_task(void)
   }else
   {
     // Send the 1st of report chain, the rest will be sent by tud_hid_report_complete_cb()
-    send_hid_report(REPORT_ID_MOUSE, btn); // changed from the example
+    send_hid_report(REPORT_ID_MOUSE, btn);
   }
 }
 
@@ -284,4 +279,75 @@ void led_blinking_task(void)
 
   board_led_write(led_state);
   led_state = 1 - led_state; // toggle
+}
+
+//OLD FUNCTIONS FROM OTHER ASSIGNMENT
+
+//function to write
+void setPin(unsigned char address, unsigned char reg, unsigned char value) {
+    uint8_t buf[2];
+    buf[0] = reg;      //Register address
+    buf[1] = value;    //Value to write
+    i2c_write_blocking(i2c1, address, buf, 2, false);
+}
+
+//function to read
+unsigned char readPin(unsigned char address, unsigned char reg) {
+    uint8_t buf[1];
+    i2c_write_blocking(i2c1, address, &reg, 1, true);  //Write register address to the device
+    i2c_read_blocking(i2c1, address, buf, 1, false);  //Read the data from the device
+    return buf[0];  //Return the data read from the register
+}
+
+//write a function to initialize the MPU6050
+static int mpu6050_init() {
+    //To turn on the chip, write 0x00 to the PWR_MGMT_1 register to turn the chip on.
+    //To enable the accelerometer, write to the ACCEL_CONFIG register. Set the sensitivity to plus minus 2g.
+    //To enable the gyroscope, write to the GYRO_CONFIG register. Set the sensitivity to plus minus 2000 dps.
+    setPin(0x68, 0x6B, 0x00);
+    //MPU6050_ADDR is 0x68, PWR_MGMT_1 0x6B, ACCEL_XOUT_H 0x3B, GYRO_CONFIG 0x1B, ACCEL_CONFIG 0x1C
+    setPin(0x68, 0x1C, 0x00);
+    setPin(0x68, 0x1B, 0x18);
+    sleep_ms(100);
+}
+
+//write a function to read out all the data in a burst
+bool read_mpu6050_data(float *accel_x, float *accel_y, float *accel_z,
+                       float *temp_c,
+                       float *gyro_x, float *gyro_y, float *gyro_z) {
+
+    //write starting register address (ACCEL_XOUT_H)
+    uint8_t reg = 0x3B;
+    uint8_t buf[14];
+    //set register
+    i2c_write_blocking(i2c1, 0x68, &reg, 1, true);
+    //read 14 bytes into buf
+    i2c_read_blocking(i2c1, 0x68, buf, 14, false);
+
+    printf("Raw data: ");
+    for (int i = 0; i < 14; i++) {
+        printf("%02x ", buf[i]);
+    }
+    printf("\n");
+    int16_t ax = (int16_t)((buf[0] << 8) | buf[1]);
+    int16_t ay = (int16_t)((buf[2] << 8) | buf[3]);
+    int16_t az = (int16_t)((buf[4] << 8) | buf[5]);
+
+    int16_t temp_raw = (int16_t)((buf[6] << 8) | buf[7]);
+
+    int16_t gx = (int16_t)((buf[8] << 8) | buf[9]);
+    int16_t gy = (int16_t)((buf[10] << 8) | buf[11]);
+    int16_t gz = (int16_t)((buf[12] << 8) | buf[13]);
+
+    
+    //convert to physical units
+    *accel_x = ax * 0.000061f;   // g
+    *accel_y = ay * 0.000061f;
+    *accel_z = az * 0.000061f;
+    *temp_c = (temp_raw / 340.00f) + 36.53f;
+    *gyro_x = gx * 0.007630f;     // degrees per sec
+    *gyro_y = gy * 0.007630f;
+    *gyro_z = gz * 0.007630f;
+
+    return true;
 }
