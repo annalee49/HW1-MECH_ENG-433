@@ -88,7 +88,7 @@ int main(void)
   while (1)
   {
     tud_task(); // tinyusb device task
-    led_blinking_task();
+    //led_blinking_task();
 
     hid_task();
   }
@@ -225,51 +225,56 @@ static void send_hid_report(uint8_t report_id, uint32_t btn)
 // tud_hid_report_complete_cb() is used to send the next report after previous one is complete
 void hid_task(void)
 {
+  if (!tud_mounted()) return;
   // Poll every 10ms
   const uint32_t interval_ms = 10;
   static uint32_t start_ms = 0;
 
-  if ( board_millis() - start_ms < interval_ms) return; // not enough time
-  start_ms += interval_ms;
+  if (board_millis() - start_ms < interval_ms) return;
+  start_ms = board_millis();
 
-  // update_mode_button();
-  // update_mode_led();
+  //THIS IS THE START OF THE CIRCLE PART
+  update_mode_button();        // toggle mode when button pressed
+  update_mode_led();           // OPTIONAL: show current mode
 
-  // uint32_t const btn = board_button_read();
-
-  // if (current_mode == MODE_IMU)
-  // {
-  //   read_mpu6050_data(&ax, &ay, &az, &temp, &gx, &gy, &gz);
-  //   int8_t dx = discretize(ax);
-  //   int8_t dy = discretize(ay);
-  //   tud_hid_mouse_report(REPORT_ID_MOUSE, 0x00, dx, dy, 0, 0);
-  // }
-  // else
-  // {
-  //   remote_circle_motion();
-  // }
-
-  uint32_t const btn = board_button_read();
-  if (board_millis() - imu_last_ms >= imu_interval_ms)
+  if (current_mode == MODE_REMOTE)
   {
-    imu_last_ms = board_millis();
-    read_mpu6050_data(&ax, &ay, &az, &temp, &gx, &gy, &gz);
+    // override behavior ONLY in remote mode
+    remote_circle_motion();
   }
+  else
+  {
+  // === your ORIGINAL code (unchanged) ===
+  read_mpu6050_data(&ax, &ay, &az, &temp, &gx, &gy, &gz);
 
   int8_t dx = discretize(ax);
   int8_t dy = discretize(ay);
 
-  // Remote wakeup
-  if ( tud_suspended() && btn )
-  {
-    // Wake up host if we are in suspend mode
-    // and REMOTE_WAKEUP feature is enabled by host
-    tud_remote_wakeup();
-  }else
-  {
-    // Send the 1st of report chain, the rest will be sent by tud_hid_report_complete_cb()
-    send_mouse_report(dx, dy);
+  tud_hid_mouse_report(REPORT_ID_MOUSE, 0x00, dx, dy, 0, 0);
   }
+
+  //THIS IS THE FLOAT MOUSE PART ONLY, NO CIRCLE NO BUTTON
+  // uint32_t const btn = board_button_read();
+  // if (board_millis() - imu_last_ms >= imu_interval_ms)
+  // {
+  //   imu_last_ms = board_millis();
+  //   read_mpu6050_data(&ax, &ay, &az, &temp, &gx, &gy, &gz);
+  // }
+
+  // int8_t dx = discretize(ax);
+  // int8_t dy = discretize(ay);
+
+  // // Remote wakeup
+  // if ( tud_suspended() && btn )
+  // {
+  //   // Wake up host if we are in suspend mode
+  //   // and REMOTE_WAKEUP feature is enabled by host
+  //   tud_remote_wakeup();
+  // }else
+  // {
+  //   // Send the 1st of report chain, the rest will be sent by tud_hid_report_complete_cb()
+  //   send_mouse_report(dx, dy);
+  // }
 }
 
 // Invoked when sent REPORT successfully to host
