@@ -42,7 +42,7 @@ pico_set_program_version(HW7 "0.1")
 
 # Modify the below lines to enable/disable output over UART/USB
 pico_enable_stdio_uart(HW7 0)
-pico_enable_stdio_usb(HW7 0)
+pico_enable_stdio_usb(HW7 1)
 
 # Add the standard library to the build
 target_link_libraries(HW7
@@ -57,7 +57,7 @@ target_include_directories(HW7 PRIVATE
 target_link_libraries(HW7 
         hardware_spi
         hardware_i2c
-        
+        hardware_adc
         )
 
 pico_add_extra_outputs(HW7)
