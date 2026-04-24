@@ -71,8 +71,7 @@ int main()
     while (true) {
 
         //sine wave on DAC A
-        float voltage = (sin(2*M_PI*2*t)+1)*(3.3/2.0); //have to convert to radians, then add one and rescale
-        float voltage = ((sin(2*M_PI*2*t)+1)/2)*3.3;
+        float voltage = ((sin(2*M_PI*2*t)+1)/2)*3.3;//have to convert to radians, then add one and rescale
         write_DAC(0,voltage);
 
         //triangle wave on DAC B
