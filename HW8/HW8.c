@@ -2,6 +2,7 @@
 #include "pico/stdlib.h"
 #include "hardware/spi.h"
 #include "hardware/i2c.h"
+#include <math.h>
 
 // SPI Defines
 // We are going to use SPI 0, and allocate it to the following GPIO pins
@@ -11,7 +12,9 @@
 #define PIN_CS_DAC  17
 #define PIN_SCK  18
 #define PIN_MOSI 19
-#define PIN_CS_RAM 20 //CHANGE THIS WHEN YOU ACTUALLY WIRE IT 
+#define PIN_CS_RAM 13 //CHANGE THIS WHEN YOU ACTUALLY WIRE IT 
+//mosi is serial data in, miso is serial data out
+//mosi is tx, miso is rx
 
 static inline void cs_select(uint cs_pin);
 static inline void cs_deselect(uint cs_pin);
@@ -45,6 +48,8 @@ int main()
     spi_init(SPI_PORT, 1000*1000);
     gpio_set_function(PIN_MISO, GPIO_FUNC_SPI);
     gpio_set_function(PIN_CS_DAC,   GPIO_FUNC_SIO);
+    gpio_set_function(PIN_CS_RAM,   GPIO_FUNC_SIO);
+
     gpio_set_function(PIN_SCK,  GPIO_FUNC_SPI);
     gpio_set_function(PIN_MOSI, GPIO_FUNC_SPI);
     
@@ -134,7 +139,8 @@ void ram_write_sine(){
         data_short = (channel&0b1) <<15;
         data_short = data_short | (0b111<<12);
 
-        voltage = (sin(2*3.14*i/1024.0)+1)*512;
+        //voltage = (sin(2*M_PI*i/1024.0)+1)*(3.3/2.0);
+        voltage = (sin(2*M_PI*i/1024.0)+1)*512;
 
         uint16_t v = voltage;
         data_short = data_short | (0b111111111111 & v);
@@ -157,7 +163,7 @@ void spi_ram_init(){
     cs_deselect(PIN_CS_RAM);
 }
 
-void spi_ram_write(uint16_t addr, uint8_t *data, int len){
+void spi_ram_write(uint16_t addr, uint8_t * data, int len){
     uint8_t packet[5]; //addr = 0b1111111111111111, we are trying to send 8 at a time, with a >> shift, the high second 8 are kept, and then its 0b00000000111111111
     packet[0] = 0b00000010; //instruction, write
     packet[1] = addr>>8; //leftmost 8 bits need to go in the first number, yes it is >> not <<
@@ -173,7 +179,7 @@ void spi_ram_write(uint16_t addr, uint8_t *data, int len){
 void spi_ram_read(uint16_t addr, uint8_t *data, int len){
     uint8_t packet[5]; //outgoing data
     packet[0] = 0b00000011; //instruction, read
-    packet[1] = addr<<8; //address we want to read from
+    packet[1] = addr>>8; //address we want to read from
     packet[2] = addr&0xFF; //address
     packet[3] = 0; 
     packet[4] = 0; 
