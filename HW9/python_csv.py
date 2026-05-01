@@ -4,7 +4,7 @@ t = [] # column 0
 data1 = [] # column 1
 data2 = [] # column 2
 
-with open('csv_file.csv') as f:
+with open('/Users/annalee/Documents/GitHub/HW1-MECH_ENG-433/HW9/sigB.csv', newline='') as f:
     # open the csv file
     reader = csv.reader(f)
     for row in reader:
