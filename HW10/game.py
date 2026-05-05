@@ -1,5 +1,6 @@
 import serial
 import pgzrun
+import random
 
 ser = serial.Serial('/dev/tty.usbmodem1101', 115200)
 
@@ -15,12 +16,34 @@ prev_L = 0
 prev_J = 0
 prev_R = 0
 
+LANES = 8
+lane_y = [i * 60 for i in range(1, LANES)]
+
+cars = []
+
+# create cars per lane
+for y in lane_y:
+    for i in range(3):
+        cars.append({
+            "x": random.randint(0, WIDTH),
+            "y": y,
+            "speed": random.choice([-3, 3])
+        })
 
 def update():
     global player_x, player_y
     global prev_L, prev_J, prev_R
 
     line = ser.readline().decode().strip()
+
+    for car in cars:
+        car["x"] += car["speed"]
+
+        # wrap around screen
+        if car["x"] > WIDTH:
+            car["x"] = -60
+        if car["x"] < -60:
+            car["x"] = WIDTH
 
     try:
         parts = line.split()
@@ -48,6 +71,16 @@ def update():
     except:
         pass  # ignore malformed serial lines
 
+    for car in cars:
+        if (
+            player_x < car["x"] + 40 and
+            player_x + 40 > car["x"] and
+            player_y == car["y"]
+        ):
+            print("💥 DEAD")
+            player_x = WIDTH // 2
+            player_y = HEIGHT - TILE
+
 
 def draw():
     screen.fill((30, 30, 30))
@@ -56,6 +89,11 @@ def draw():
         Rect((player_x, player_y), (TILE, TILE)),
         (0, 255, 0)
     )
+    for car in cars:
+        screen.draw.filled_rect(
+            Rect((car["x"], car["y"]), (40, 40)),
+            (255, 0, 0)
+        )
 
     # optional grid
     for x in range(0, WIDTH, TILE):
