@@ -21,7 +21,6 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <string.h>
 
 /* USER CODE END Includes */
 
@@ -119,39 +118,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  if (BspButtonState == BUTTON_PRESSED){
-		  BspButtonState = BUTTON_RELEASED;
-		  BSP_LED_Toggle(LED_GREEN);
-		  BSP_LED_Toggle(LED_BLUE);
-		  printf("hello\r\n");
-
-		  char m[100];
-		  int number = 5;
-		  sprintf(m, "hello %d\r\n", number);
-		  HAL_UART_Tansmit(huart1, m, strlen(m), 100000);
-
-		  int rxNumber;
-		  char rxMessage[100];
-		  char buffer[1000];
-		  int index = 0;
-
-		  HAL_UART_Receive(huart1, rxMessage, 100, 10);
-
-		  for (i = 0; i<strlen(rxMessage); i++){
-			  if (rxMessage[i] == '\n'){
-				  sscanf(buffer, "%d", &rxNumber);
-
-			  }
-			  else {
-				  buffer[index] = rxMessage[i];
-				  index++;
-				  if (index == 1000){
-					  index = 0; //rollover
-				  }
-			  }
-		  }
-
-	  }
 
     /* USER CODE END WHILE */
 
