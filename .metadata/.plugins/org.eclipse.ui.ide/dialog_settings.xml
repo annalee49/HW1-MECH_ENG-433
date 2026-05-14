@@ -2,6 +2,13 @@
 <section name="Workbench">
 	<section name="ExternalProjectImportWizard">
 		<item key="WizardProjectsImportPage.STORE_NESTED_PROJECTS" value="true"/>
+		<section name="ExternalProjectImportWizard.dialogBounds">
+			<item key="DIALOG_X_ORIGIN" value="232"/>
+			<item key="DIALOG_Y_ORIGIN" value="78"/>
+			<item key="DIALOG_WIDTH" value="586"/>
+			<item key="DIALOG_HEIGHT" value="699"/>
+			<item key="DIALOG_FONT_NAME" value="1|.AppleSystemUIFont|11.0|0|COCOA|1|.AppleSystemUIFont"/>
+		</section>
 	</section>
 	<section name="SmartImportWizard">
 		<item key="SmartImportRootWizardPage.STORE_HIDE_ALREADY_OPEN" value="false"/>
@@ -9,11 +16,13 @@
 		<item key="SmartImportRootWizardPage.STORE_NESTED_PROJECTS" value="true"/>
 		<item key="SmartImportRootWizardPage.STORE_CONFIGURE_NATURES" value="true"/>
 		<list key="org.eclipse.ui.internal.wizards.datatransfer.SmartImportRootWizardPage.knownSources">
+			<item value="/Users/annalee/Documents/GitHub/HW1-MECH_ENG-433/FDCAN_Com_Polling/STM32CubeIDE"/>
+			<item value="/Users/annalee/Documents/GitHub/HW1-MECH_ENG-433/FDCAN_Com_Polling"/>
 			<item value="/Users/annalee/Documents/GitHub/HW1-MECH_ENG-433/HW11"/>
 		</list>
 		<section name="STSmartImportWizard.dialogBounds">
 			<item key="DIALOG_X_ORIGIN" value="232"/>
-			<item key="DIALOG_Y_ORIGIN" value="164"/>
+			<item key="DIALOG_Y_ORIGIN" value="181"/>
 			<item key="DIALOG_WIDTH" value="880"/>
 			<item key="DIALOG_HEIGHT" value="566"/>
 			<item key="DIALOG_FONT_NAME" value="1|.AppleSystemUIFont|11.0|0|COCOA|1|.AppleSystemUIFont"/>
@@ -26,5 +35,14 @@
 		<item key="DIALOG_WIDTH" value="540"/>
 		<item key="DIALOG_HEIGHT" value="442"/>
 		<item key="DIALOG_FONT_NAME" value="1|.AppleSystemUIFont|11.0|0|COCOA|1|.AppleSystemUIFont"/>
+	</section>
+	<section name="BasicNewProjectResourceWizard">
+		<section name="BasicNewProjectResourceWizard.dialogBounds">
+			<item key="DIALOG_X_ORIGIN" value="232"/>
+			<item key="DIALOG_Y_ORIGIN" value="92"/>
+			<item key="DIALOG_WIDTH" value="586"/>
+			<item key="DIALOG_HEIGHT" value="500"/>
+			<item key="DIALOG_FONT_NAME" value="1|.AppleSystemUIFont|11.0|0|COCOA|1|.AppleSystemUIFont"/>
+		</section>
 	</section>
 </section>
