@@ -1856,18 +1856,6 @@
 		)
 	)
 	(gr_rect
-		(start 85.25 64)
-		(end 87.75 65.5)
-		(stroke
-			(width 0.2)
-			(type solid)
-		)
-		(fill yes)
-		(layer "F.Cu")
-		(net 6)
-		(uuid "439ca425-f33c-4384-b5e5-468aab0f9d1e")
-	)
-	(gr_rect
 		(start 127.5 62.5)
 		(end 130 64)
 		(stroke
@@ -1905,6 +1893,18 @@
 		(at 84 63 0)
 		(layer "F.SilkS")
 		(uuid "db25572d-7182-4b2e-b195-9655c69907d6")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.1)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "V_out = 5V"
+		(at 124 62 0)
+		(layer "F.SilkS")
+		(uuid "f6dc55f2-f469-4025-83d8-b6206c0305d7")
 		(effects
 			(font
 				(size 1 1)
@@ -2240,6 +2240,36 @@
 		(layer "F.Cu")
 		(net 7)
 		(uuid "faeb09a4-1c25-43bd-a044-dd36bbc67ac1")
+	)
+	(zone
+		(net 1)
+		(net_name "GNDREF")
+		(layer "B.Cu")
+		(uuid "81a84293-d8c7-463d-aeb1-928cf7cc542e")
+		(hatch edge 0.5)
+		(connect_pads
+			(clearance 0.5)
+		)
+		(min_thickness 0.25)
+		(filled_areas_thickness no)
+		(fill yes
+			(thermal_gap 0.5)
+			(thermal_bridge_width 0.5)
+		)
+		(polygon
+			(pts
+				(xy 90.5 79.5) (xy 94 79.5) (xy 94 81.5) (xy 90.5 81.5)
+			)
+		)
+		(filled_polygon
+			(layer "B.Cu")
+			(pts
+				(xy 93.943039 79.519685) (xy 93.988794 79.572489) (xy 94 79.624) (xy 94 81.376) (xy 93.980315 81.443039)
+				(xy 93.927511 81.488794) (xy 93.876 81.5) (xy 90.624 81.5) (xy 90.556961 81.480315) (xy 90.511206 81.427511)
+				(xy 90.5 81.376) (xy 90.5 79.624) (xy 90.519685 79.556961) (xy 90.572489 79.511206) (xy 90.624 79.5)
+				(xy 93.876 79.5)
+			)
+		)
 	)
 	(embedded_fonts no)
 )
